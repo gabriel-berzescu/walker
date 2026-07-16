@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WALKER // UNDER CONSTRUCTION</title>
+<style>
+  :root {
+    --neon-cyan: #00f0ff;
+    --neon-magenta: #ff00a0;
+    --neon-yellow: #f5d300;
+    --bg: #05010d;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body { height: 100%; }
+
+  body {
+    background: var(--bg);
+    color: var(--neon-cyan);
+    font-family: 'Courier New', Consolas, monospace;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ── Perspective grid floor ───────────────────────── */
+  .grid-floor {
+    position: fixed;
+    left: -50%;
+    right: -50%;
+    bottom: -10%;
+    height: 55%;
+    background:
+      linear-gradient(transparent 0%, rgba(255, 0, 160, 0.25) 100%),
+      repeating-linear-gradient(90deg, rgba(255, 0, 160, 0.4) 0 2px, transparent 2px 80px),
+      repeating-linear-gradient(0deg, rgba(255, 0, 160, 0.4) 0 2px, transparent 2px 60px);
+    transform: perspective(300px) rotateX(60deg);
+    transform-origin: top;
+    animation: grid-scroll 3s linear infinite;
+  }
+
+  @keyframes grid-scroll {
+    from { background-position: 0 0, 0 0, 0 0; }
+    to   { background-position: 0 0, 0 0, 0 60px; }
+  }
+
+  /* ── Scanlines + CRT vignette ─────────────────────── */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.25) 0 1px,
+      transparent 1px 3px
+    );
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.85) 100%);
+    pointer-events: none;
+    z-index: 11;
+  }
+
+  /* ── Main terminal card ───────────────────────────── */
+  .terminal {
+    position: relative;
+    z-index: 5;
+    text-align: center;
+    padding: 3rem 2.5rem;
+    border: 1px solid rgba(0, 240, 255, 0.35);
+    background: rgba(5, 1, 13, 0.75);
+    box-shadow:
+      0 0 20px rgba(0, 240, 255, 0.15),
+      inset 0 0 40px rgba(0, 240, 255, 0.05);
+    backdrop-filter: blur(2px);
+    max-width: 90vw;
+  }
+
+  .terminal .corner {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--neon-cyan);
+  }
+  .corner.tl { top: -2px; left: -2px; border-right: none; border-bottom: none; }
+  .corner.tr { top: -2px; right: -2px; border-left: none; border-bottom: none; }
+  .corner.bl { bottom: -2px; left: -2px; border-right: none; border-top: none; }
+  .corner.br { bottom: -2px; right: -2px; border-left: none; border-top: none; }
+
+  .sys-line {
+    font-size: 0.75rem;
+    letter-spacing: 0.35em;
+    color: var(--neon-yellow);
+    text-shadow: 0 0 8px var(--neon-yellow);
+    margin-bottom: 1.5rem;
+    animation: flicker 4s infinite;
+  }
+
+  /* ── Glitch title ─────────────────────────────────── */
+  .glitch {
+    position: relative;
+    font-size: clamp(2.2rem, 9vw, 5.5rem);
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: #fff;
+    text-shadow:
+      0 0 10px var(--neon-cyan),
+      0 0 30px var(--neon-cyan),
+      0 0 60px rgba(0, 240, 255, 0.5);
+    user-select: none;
+  }
+
+  .glitch::before,
+  .glitch::after {
+    content: attr(data-text);
+    position: absolute;
+    inset: 0;
+  }
+
+  .glitch::before {
+    color: var(--neon-magenta);
+    text-shadow: 2px 0 var(--neon-magenta);
+    clip-path: inset(20% 0 40% 0);
+    animation: glitch-shift 2.7s infinite steps(1);
+  }
+
+  .glitch::after {
+    color: var(--neon-cyan);
+    text-shadow: -2px 0 var(--neon-cyan);
+    clip-path: inset(60% 0 10% 0);
+    animation: glitch-shift 1.9s infinite steps(1) reverse;
+  }
+
+  @keyframes glitch-shift {
+    0%   { transform: translate(0); clip-path: inset(20% 0 40% 0); }
+    10%  { transform: translate(-4px, 2px); clip-path: inset(80% 0 5% 0); }
+    20%  { transform: translate(4px, -2px); clip-path: inset(10% 0 70% 0); }
+    30%  { transform: translate(0); clip-path: inset(45% 0 35% 0); }
+    45%  { transform: translate(3px, 1px); clip-path: inset(65% 0 15% 0); }
+    60%  { transform: translate(-3px, -1px); clip-path: inset(25% 0 55% 0); }
+    75%  { transform: translate(0); clip-path: inset(5% 0 85% 0); }
+    100% { transform: translate(0); clip-path: inset(20% 0 40% 0); }
+  }
+
+  @keyframes flicker {
+    0%, 100% { opacity: 1; }
+    92% { opacity: 1; }
+    93% { opacity: 0.3; }
+    94% { opacity: 1; }
+    96% { opacity: 0.5; }
+    97% { opacity: 1; }
+  }
+
+  .subtitle {
+    margin-top: 1.2rem;
+    font-size: clamp(0.85rem, 2.5vw, 1.1rem);
+    letter-spacing: 0.5em;
+    color: var(--neon-magenta);
+    text-shadow: 0 0 10px var(--neon-magenta);
+    text-transform: uppercase;
+  }
+
+  /* ── Progress bar ─────────────────────────────────── */
+  .progress {
+    margin: 2.2rem auto 0;
+    width: min(420px, 70vw);
+    height: 14px;
+    border: 1px solid var(--neon-cyan);
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+    padding: 2px;
+  }
+
+  .progress-bar {
+    height: 100%;
+    width: 0%;
+    background: repeating-linear-gradient(
+      45deg,
+      var(--neon-cyan) 0 10px,
+      var(--neon-magenta) 10px 20px
+    );
+    box-shadow: 0 0 12px var(--neon-cyan);
+    animation: load 6s ease-in-out infinite;
+  }
+
+  @keyframes load {
+    0%   { width: 3%; }
+    35%  { width: 42%; }
+    50%  { width: 45%; }
+    80%  { width: 87%; }
+    92%  { width: 61%; } /* progress is a lie */
+    100% { width: 96%; }
+  }
+
+  .status {
+    margin-top: 1rem;
+    font-size: 0.8rem;
+    letter-spacing: 0.25em;
+    color: rgba(0, 240, 255, 0.7);
+    min-height: 1.2em;
+  }
+
+  .cursor {
+    display: inline-block;
+    width: 0.6em;
+    background: var(--neon-cyan);
+    box-shadow: 0 0 8px var(--neon-cyan);
+    animation: blink 0.9s steps(1) infinite;
+  }
+
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; }
+    .progress-bar { width: 60%; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="grid-floor"></div>
+
+  <main class="terminal">
+    <span class="corner tl"></span><span class="corner tr"></span>
+    <span class="corner bl"></span><span class="corner br"></span>
+
+    <div class="sys-line">[ SYS.BOOT // NODE: WALKER-01 // STATUS: OFFLINE ]</div>
+
+    <h1 class="glitch" data-text="WALKER">WALKER</h1>
+    <p class="subtitle">Under Construction</p>
+
+    <div class="progress" role="progressbar" aria-label="construction progress">
+      <div class="progress-bar"></div>
+    </div>
+
+    <p class="status"><span id="status-text">INITIALIZING</span><span class="cursor">&nbsp;</span></p>
+  </main>
+
+  <script>
+    const messages = [
+      "INITIALIZING",
+      "COMPILING NEON",
+      "CALIBRATING SYNAPSES",
+      "ROUTING THROUGH ICE",
+      "DECRYPTING MAINFRAME",
+      "JACKING IN",
+      "ALMOST THERE... PROBABLY",
+    ];
+    const el = document.getElementById("status-text");
+    let i = 0;
+    setInterval(() => {
+      i = (i + 1) % messages.length;
+      el.textContent = messages[i];
+    }, 2200);
+  </script>
+
+</body>
+</html>
