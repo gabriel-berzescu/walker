@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WALKER // UNDER CONSTRUCTION</title>
+<title>WALKER // NIGHT CITY</title>
 <style>
   :root {
     --neon-cyan: #00f0ff;
@@ -21,14 +21,35 @@
     color: var(--neon-cyan);
     font-family: 'Courier New', Consolas, monospace;
     overflow: hidden;
+  }
+
+  #game {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  /* ── Title / pause overlay ────────────────────────── */
+  #overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
     display: flex;
     align-items: center;
     justify-content: center;
+    background: rgba(5, 1, 13, 0.55);
+    transition: opacity 0.6s ease;
   }
 
-  /* ── Perspective grid floor ───────────────────────── */
+  #overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+
   .grid-floor {
-    position: fixed;
+    position: absolute;
     left: -50%;
     right: -50%;
     bottom: -10%;
@@ -47,50 +68,25 @@
     to   { background-position: 0 0, 0 0, 0 60px; }
   }
 
-  /* ── Scanlines + CRT vignette ─────────────────────── */
-  body::before {
+  #overlay::before {
     content: "";
-    position: fixed;
+    position: absolute;
     inset: 0;
-    background: repeating-linear-gradient(
-      0deg,
-      rgba(0, 0, 0, 0.25) 0 1px,
-      transparent 1px 3px
-    );
+    background: repeating-linear-gradient(0deg, rgba(0,0,0,0.25) 0 1px, transparent 1px 3px);
     pointer-events: none;
-    z-index: 10;
   }
 
-  body::after {
-    content: "";
-    position: fixed;
-    inset: 0;
-    background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.85) 100%);
-    pointer-events: none;
-    z-index: 11;
-  }
-
-  /* ── Main terminal card ───────────────────────────── */
   .terminal {
     position: relative;
-    z-index: 5;
     text-align: center;
     padding: 3rem 2.5rem;
     border: 1px solid rgba(0, 240, 255, 0.35);
-    background: rgba(5, 1, 13, 0.75);
-    box-shadow:
-      0 0 20px rgba(0, 240, 255, 0.15),
-      inset 0 0 40px rgba(0, 240, 255, 0.05);
-    backdrop-filter: blur(2px);
+    background: rgba(5, 1, 13, 0.8);
+    box-shadow: 0 0 20px rgba(0, 240, 255, 0.15), inset 0 0 40px rgba(0, 240, 255, 0.05);
     max-width: 90vw;
   }
 
-  .terminal .corner {
-    position: absolute;
-    width: 14px;
-    height: 14px;
-    border: 2px solid var(--neon-cyan);
-  }
+  .corner { position: absolute; width: 14px; height: 14px; border: 2px solid var(--neon-cyan); }
   .corner.tl { top: -2px; left: -2px; border-right: none; border-bottom: none; }
   .corner.tr { top: -2px; right: -2px; border-left: none; border-bottom: none; }
   .corner.bl { bottom: -2px; left: -2px; border-right: none; border-top: none; }
@@ -105,22 +101,17 @@
     animation: flicker 4s infinite;
   }
 
-  /* ── Glitch title ─────────────────────────────────── */
   .glitch {
     position: relative;
-    font-size: clamp(2.2rem, 9vw, 5.5rem);
+    font-size: clamp(2.2rem, 9vw, 5rem);
     font-weight: 700;
     letter-spacing: 0.12em;
     color: #fff;
-    text-shadow:
-      0 0 10px var(--neon-cyan),
-      0 0 30px var(--neon-cyan),
-      0 0 60px rgba(0, 240, 255, 0.5);
+    text-shadow: 0 0 10px var(--neon-cyan), 0 0 30px var(--neon-cyan), 0 0 60px rgba(0,240,255,0.5);
     user-select: none;
   }
 
-  .glitch::before,
-  .glitch::after {
+  .glitch::before, .glitch::after {
     content: attr(data-text);
     position: absolute;
     inset: 0;
@@ -162,14 +153,13 @@
 
   .subtitle {
     margin-top: 1.2rem;
-    font-size: clamp(0.85rem, 2.5vw, 1.1rem);
+    font-size: clamp(0.85rem, 2.5vw, 1.05rem);
     letter-spacing: 0.5em;
     color: var(--neon-magenta);
     text-shadow: 0 0 10px var(--neon-magenta);
     text-transform: uppercase;
   }
 
-  /* ── Progress bar ─────────────────────────────────── */
   .progress {
     margin: 2.2rem auto 0;
     width: min(420px, 70vw);
@@ -182,22 +172,9 @@
   .progress-bar {
     height: 100%;
     width: 0%;
-    background: repeating-linear-gradient(
-      45deg,
-      var(--neon-cyan) 0 10px,
-      var(--neon-magenta) 10px 20px
-    );
+    background: repeating-linear-gradient(45deg, var(--neon-cyan) 0 10px, var(--neon-magenta) 10px 20px);
     box-shadow: 0 0 12px var(--neon-cyan);
-    animation: load 6s ease-in-out infinite;
-  }
-
-  @keyframes load {
-    0%   { width: 3%; }
-    35%  { width: 42%; }
-    50%  { width: 45%; }
-    80%  { width: 87%; }
-    92%  { width: 61%; } /* progress is a lie */
-    100% { width: 96%; }
+    transition: width 0.4s ease;
   }
 
   .status {
@@ -208,61 +185,115 @@
     min-height: 1.2em;
   }
 
-  .cursor {
-    display: inline-block;
-    width: 0.6em;
+  #jack-in {
+    display: none;
+    margin: 2rem auto 0;
+    padding: 0.9rem 2.6rem;
+    font-family: inherit;
+    font-size: 1.1rem;
+    letter-spacing: 0.3em;
+    color: var(--bg);
     background: var(--neon-cyan);
-    box-shadow: 0 0 8px var(--neon-cyan);
-    animation: blink 0.9s steps(1) infinite;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 0 20px var(--neon-cyan), 0 0 60px rgba(0, 240, 255, 0.4);
+    text-transform: uppercase;
+    animation: flicker 5s infinite;
   }
 
-  @keyframes blink {
-    50% { opacity: 0; }
+  #jack-in:hover {
+    background: var(--neon-magenta);
+    box-shadow: 0 0 20px var(--neon-magenta), 0 0 60px rgba(255, 0, 160, 0.4);
   }
 
-  @media (prefers-reduced-motion: reduce) {
-    * { animation: none !important; }
-    .progress-bar { width: 60%; }
+  #overlay.ready .progress, #overlay.ready .status { display: none; }
+  #overlay.ready #jack-in { display: inline-block; }
+
+  /* ── HUD ──────────────────────────────────────────── */
+  #hud { position: fixed; inset: 0; z-index: 15; pointer-events: none; display: none; }
+  #hud.visible { display: block; }
+
+  #crosshair {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 5px; height: 5px;
+    margin: -2.5px 0 0 -2.5px;
+    border-radius: 50%;
+    background: rgba(0, 240, 255, 0.85);
+    box-shadow: 0 0 6px var(--neon-cyan);
+  }
+
+  #shards {
+    position: absolute;
+    top: 1.2rem; right: 1.5rem;
+    font-size: 0.85rem;
+    letter-spacing: 0.3em;
+    color: var(--neon-yellow);
+    text-shadow: 0 0 8px var(--neon-yellow);
+  }
+
+  #hints {
+    position: absolute;
+    bottom: 1.2rem; left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.72rem;
+    letter-spacing: 0.25em;
+    color: rgba(0, 240, 255, 0.55);
+    text-shadow: 0 0 6px rgba(0, 240, 255, 0.4);
+    white-space: nowrap;
+    transition: opacity 2s ease;
+  }
+
+  #hints.faded { opacity: 0; }
+
+  #toast {
+    position: absolute;
+    top: 20%; left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.9rem;
+    letter-spacing: 0.4em;
+    color: var(--neon-cyan);
+    text-shadow: 0 0 10px var(--neon-cyan);
+    opacity: 0;
+    transition: opacity 0.8s ease;
   }
 </style>
 </head>
 <body>
 
-  <div class="grid-floor"></div>
+  <canvas id="game"></canvas>
 
-  <main class="terminal">
-    <span class="corner tl"></span><span class="corner tr"></span>
-    <span class="corner bl"></span><span class="corner br"></span>
+  <div id="hud">
+    <div id="crosshair"></div>
+    <div id="shards">SHARDS // 0</div>
+    <div id="hints">WASD MOVE &nbsp;//&nbsp; MOUSE LOOK &nbsp;//&nbsp; SPACE JUMP &nbsp;//&nbsp; CLICK PULSE &nbsp;//&nbsp; Q SPAWN CUBE &nbsp;//&nbsp; SHIFT RUN</div>
+    <div id="toast"></div>
+  </div>
 
-    <div class="sys-line">[ SYS.BOOT // NODE: WALKER-01 // STATUS: OFFLINE ]</div>
+  <div id="overlay">
+    <div class="grid-floor"></div>
+    <main class="terminal">
+      <span class="corner tl"></span><span class="corner tr"></span>
+      <span class="corner bl"></span><span class="corner br"></span>
+      <div class="sys-line" id="sys-line">[ SYS.BOOT // NODE: WALKER-01 // STATUS: LOADING ]</div>
+      <h1 class="glitch" data-text="WALKER">WALKER</h1>
+      <p class="subtitle" id="subtitle">Night City Drift</p>
+      <div class="progress"><div class="progress-bar" id="boot-bar"></div></div>
+      <p class="status"><span id="status-text">INITIALIZING</span></p>
+      <button id="jack-in">◢ Jack In ◣</button>
+    </main>
+  </div>
 
-    <h1 class="glitch" data-text="WALKER">WALKER</h1>
-    <p class="subtitle">Under Construction</p>
-
-    <div class="progress" role="progressbar" aria-label="construction progress">
-      <div class="progress-bar"></div>
-    </div>
-
-    <p class="status"><span id="status-text">INITIALIZING</span><span class="cursor">&nbsp;</span></p>
-  </main>
-
-  <script>
-    const messages = [
-      "INITIALIZING",
-      "COMPILING NEON",
-      "CALIBRATING SYNAPSES",
-      "ROUTING THROUGH ICE",
-      "DECRYPTING MAINFRAME",
-      "JACKING IN",
-      "ALMOST THERE... PROBABLY",
-    ];
-    const el = document.getElementById("status-text");
-    let i = 0;
-    setInterval(() => {
-      i = (i + 1) % messages.length;
-      el.textContent = messages[i];
-    }, 2200);
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
+      "rapier": "https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@0.12.0/+esm"
+    }
+  }
   </script>
+  <script type="module" src="js/main.js"></script>
 
 </body>
 </html>
