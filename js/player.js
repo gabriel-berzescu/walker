@@ -16,13 +16,11 @@ export class Player {
     this.pitch = 0;
     this.vy = 0;
     this.grounded = false;
-    this.bobPhase = 0;
-    this.bobAmp = 0;        // smoothed 0..1, so the bob fades in and out
-    this.bobTarget = 0;
     this.keys = new Set();
     this.position = new THREE.Vector3(0, 1.05, 0);
     this.prevPosition = this.position.clone();
     this.renderPos = this.position.clone();
+    this.smoothY = this.position.y;
 
     // Kinematic capsule driven by Rapier's character controller
     this.body = world.createRigidBody(
@@ -86,10 +84,6 @@ export class Player {
     this.body.setNextKinematicTranslation(next);
     this.position.set(next.x, next.y, next.z);
 
-    // Gentle head bob only while moving on the ground
-    const moving = (ix !== 0 || iz !== 0) && this.grounded;
-    this.bobTarget = moving ? 1 : 0;
-    if (moving) this.bobPhase += speed * dt * 1.6;
   }
 
   // alpha in [0,1]: how far we are between two physics steps —
@@ -102,12 +96,17 @@ export class Player {
 
     this.renderPos.copy(this.prevPosition).lerp(this.position, alpha);
 
-    this.bobAmp += (this.bobTarget - this.bobAmp) * Math.min(1, dt * 5);
-    const bob = Math.sin(this.bobPhase) * 0.02 * this.bobAmp;
+    // Damp millimetre-scale vertical noise from ground snapping, but
+    // follow instantly on real height changes (jumps, steps, falls).
+    if (Math.abs(this.renderPos.y - this.smoothY) > 0.3) {
+      this.smoothY = this.renderPos.y;
+    } else {
+      this.smoothY += (this.renderPos.y - this.smoothY) * Math.min(1, dt * 12);
+    }
 
     this.camera.position.set(
       this.renderPos.x,
-      this.renderPos.y + EYE_OFFSET + bob,
+      this.smoothY + EYE_OFFSET,
       this.renderPos.z
     );
   }
