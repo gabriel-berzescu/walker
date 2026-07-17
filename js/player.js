@@ -18,8 +18,6 @@ export class Player {
     this.grounded = false;
     this.keys = new Set();
     this.position = new THREE.Vector3(0, 1.05, 0);
-    this.prevPosition = this.position.clone();
-    this.renderPos = this.position.clone();
     this.smoothY = this.position.y;
 
     // Kinematic capsule driven by Rapier's character controller
@@ -48,8 +46,6 @@ export class Player {
   }
 
   fixedUpdate(dt) {
-    this.prevPosition.copy(this.position);
-
     // Movement direction in the horizontal plane, relative to yaw
     let ix = 0, iz = 0;
     if (this.keys.has('KeyW')) iz -= 1;
@@ -86,28 +82,23 @@ export class Player {
 
   }
 
-  // alpha in [0,1]: how far we are between two physics steps —
-  // the camera follows an interpolated position so it never stutters
-  // when the display refresh rate isn't a multiple of the physics rate.
-  update(dt, alpha) {
+  update(dt) {
     this.camera.rotation.set(0, 0, 0);
     this.camera.rotateY(this.yaw);
     this.camera.rotateX(this.pitch);
 
-    this.renderPos.copy(this.prevPosition).lerp(this.position, alpha);
-
     // Damp millimetre-scale vertical noise from ground snapping, but
     // follow instantly on real height changes (jumps, steps, falls).
-    if (Math.abs(this.renderPos.y - this.smoothY) > 0.3) {
-      this.smoothY = this.renderPos.y;
+    if (Math.abs(this.position.y - this.smoothY) > 0.3) {
+      this.smoothY = this.position.y;
     } else {
-      this.smoothY += (this.renderPos.y - this.smoothY) * Math.min(1, dt * 12);
+      this.smoothY += (this.position.y - this.smoothY) * Math.min(1, dt * 12);
     }
 
     this.camera.position.set(
-      this.renderPos.x,
+      this.position.x,
       this.smoothY + EYE_OFFSET,
-      this.renderPos.z
+      this.position.z
     );
   }
 }

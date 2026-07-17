@@ -112,9 +112,13 @@ export class City {
     const pcx = Math.round(playerPos.x / CHUNK);
     const pcz = Math.round(playerPos.z / CHUNK);
 
-    // Keep the (finite) physics ground slab centered under the player
-    if (this.groundBody) {
+    // Keep the (finite) physics ground slab centered under the player.
+    // Only reposition on an actual chunk change — teleporting a fixed
+    // body every frame disturbs the character's ground contact.
+    if (this.groundBody && (pcx !== this.lastPcx || pcz !== this.lastPcz)) {
       this.groundBody.setTranslation({ x: pcx * CHUNK, y: -0.5, z: pcz * CHUNK }, false);
+      this.lastPcx = pcx;
+      this.lastPcz = pcz;
     }
 
     // Unload far chunks

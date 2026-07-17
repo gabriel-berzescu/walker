@@ -10,7 +10,6 @@ import { Props } from './props.js';
 import { AudioEngine } from './audio.js';
 
 const FOG_COLOR = 0x070312;
-const FIXED_DT = 1 / 60;
 
 const overlay = document.getElementById('overlay');
 const sysLine = document.getElementById('sys-line');
@@ -131,21 +130,21 @@ async function boot() {
   });
 
   // ── Main loop ─────────────────────────────────────
+  // Exactly one physics step per rendered frame, sized to the frame's
+  // duration: physics and rendering can never drift out of phase, so
+  // the camera is glued to the simulation with zero temporal aliasing.
   const clock = new THREE.Clock();
-  let accumulator = 0;
 
   function animate() {
     requestAnimationFrame(animate);
     const dt = Math.min(clock.getDelta(), 0.1);
 
     if (playing) {
-      accumulator += dt;
-      while (accumulator >= FIXED_DT) {
-        player.fixedUpdate(FIXED_DT);
-        world.step();
-        accumulator -= FIXED_DT;
-      }
-      player.update(dt, accumulator / FIXED_DT);
+      const stepDt = Math.min(dt, 1 / 30);
+      world.timestep = stepDt;
+      player.fixedUpdate(stepDt);
+      world.step();
+      player.update(stepDt);
       props.sync();
       city.update(player.position);
       city.tick(dt, player.position);
