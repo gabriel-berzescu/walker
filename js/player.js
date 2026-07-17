@@ -18,7 +18,6 @@ export class Player {
     this.grounded = false;
     this.keys = new Set();
     this.position = new THREE.Vector3(0, 1.05, 0);
-    this.smoothY = this.position.y;
 
     // Kinematic capsule driven by Rapier's character controller
     this.body = world.createRigidBody(
@@ -28,9 +27,11 @@ export class Player {
       RAPIER.ColliderDesc.capsule(0.55, 0.35), this.body
     );
 
+    // No autostep: the city is flat, and autostep is prone to
+    // hallucinating steps while walking, popping the capsule upward
+    // (then snap-to-ground yanks it back down = vertical jitter).
     this.controller = world.createCharacterController(0.08);
-    this.controller.enableAutostep(0.5, 0.2, true);
-    this.controller.enableSnapToGround(0.4);
+    this.controller.enableSnapToGround(0.2);
     this.controller.setApplyImpulsesToDynamicBodies(true);
 
     document.addEventListener('mousemove', (e) => {
@@ -82,22 +83,14 @@ export class Player {
 
   }
 
-  update(dt) {
+  update() {
     this.camera.rotation.set(0, 0, 0);
     this.camera.rotateY(this.yaw);
     this.camera.rotateX(this.pitch);
 
-    // Damp millimetre-scale vertical noise from ground snapping, but
-    // follow instantly on real height changes (jumps, steps, falls).
-    if (Math.abs(this.position.y - this.smoothY) > 0.3) {
-      this.smoothY = this.position.y;
-    } else {
-      this.smoothY += (this.position.y - this.smoothY) * Math.min(1, dt * 12);
-    }
-
     this.camera.position.set(
       this.position.x,
-      this.smoothY + EYE_OFFSET,
+      this.position.y + EYE_OFFSET,
       this.position.z
     );
   }

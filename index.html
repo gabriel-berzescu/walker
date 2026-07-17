@@ -257,6 +257,17 @@
     opacity: 0;
     transition: opacity 0.8s ease;
   }
+
+  #diag {
+    position: absolute;
+    top: 1.2rem; left: 1.5rem;
+    font-size: 0.72rem;
+    line-height: 1.6;
+    letter-spacing: 0.08em;
+    color: #9fe8ff;
+    text-shadow: 0 0 4px rgba(0, 240, 255, 0.5);
+    white-space: pre;
+  }
 </style>
 </head>
 <body>
@@ -268,6 +279,7 @@
     <div id="shards">SHARDS // 0</div>
     <div id="hints">WASD MOVE &nbsp;//&nbsp; MOUSE LOOK &nbsp;//&nbsp; SPACE JUMP &nbsp;//&nbsp; CLICK PULSE &nbsp;//&nbsp; Q SPAWN CUBE &nbsp;//&nbsp; SHIFT RUN</div>
     <div id="toast"></div>
+    <div id="diag"></div>
   </div>
 
   <div id="overlay">

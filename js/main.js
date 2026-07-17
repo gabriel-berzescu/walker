@@ -40,7 +40,8 @@ async function boot() {
   const canvas = document.getElementById('game');
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  let pixelRatio = Math.min(window.devicePixelRatio, 2);
+  renderer.setPixelRatio(pixelRatio);
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.1;
 
@@ -129,6 +130,56 @@ async function boot() {
     composer.setSize(window.innerWidth, window.innerHeight);
   });
 
+  // ── Diagnostics (F3) + quality toggles (P, B) ─────
+  const diagEl = document.getElementById('diag');
+  let diagVisible = false;
+  const frameTimes = [];
+  const camYs = [];
+  const groundedHist = [];
+  let diagClock = 0;
+
+  document.addEventListener('keydown', (e) => {
+    if (e.code === 'F3') {
+      e.preventDefault();
+      diagVisible = !diagVisible;
+      diagEl.textContent = '';
+    }
+    if (document.pointerLockElement !== canvas) return;
+    if (e.code === 'KeyP') {
+      const steps = [0.75, 1, 1.25, 1.5, 2];
+      pixelRatio = steps[(steps.indexOf(pixelRatio) + 1) % steps.length];
+      renderer.setPixelRatio(pixelRatio);
+      composer.setSize(window.innerWidth, window.innerHeight);
+      toast(`PIXEL RATIO // ${pixelRatio}`);
+    }
+    if (e.code === 'KeyB') {
+      bloom.enabled = !bloom.enabled;
+      toast(`BLOOM // ${bloom.enabled ? 'ON' : 'OFF'}`);
+    }
+  });
+
+  function updateDiag(dt) {
+    frameTimes.push(dt * 1000);
+    camYs.push(camera.position.y);
+    groundedHist.push(player.grounded);
+    if (frameTimes.length > 90) { frameTimes.shift(); camYs.shift(); groundedHist.shift(); }
+    diagClock += dt;
+    if (diagClock < 0.25 || !diagVisible) return;
+    diagClock = 0;
+    const avg = frameTimes.reduce((a, b) => a + b, 0) / frameTimes.length;
+    const worst = Math.max(...frameTimes);
+    const camJitter = (Math.max(...camYs) - Math.min(...camYs)) * 1000;
+    let groundedFlips = 0;
+    for (let i = 1; i < groundedHist.length; i++) {
+      if (groundedHist[i] !== groundedHist[i - 1]) groundedFlips++;
+    }
+    diagEl.textContent =
+      `FPS ${(1000 / avg).toFixed(0)}  //  FRAME ${avg.toFixed(1)}ms (worst ${worst.toFixed(1)})\n` +
+      `CAM-Y JITTER ${camJitter.toFixed(1)}mm  //  DPR ${pixelRatio}\n` +
+      `PHYS-Y ${player.position.y.toFixed(3)}  //  VY ${player.vy.toFixed(2)}  //  GND ${player.grounded ? 'Y' : 'N'} (flips ${groundedFlips})\n` +
+      `[F3] hide  [P] pixel ratio  [B] bloom`;
+  }
+
   // ── Main loop ─────────────────────────────────────
   // Exactly one physics step per rendered frame, sized to the frame's
   // duration: physics and rendering can never drift out of phase, so
@@ -144,13 +195,14 @@ async function boot() {
       world.timestep = stepDt;
       player.fixedUpdate(stepDt);
       world.step();
-      player.update(stepDt);
+      player.update();
       props.sync();
       city.update(player.position);
       city.tick(dt, player.position);
       rain.update(dt, camera.position);
       playerGlow.position.copy(camera.position);
       playerGlow.position.y += 0.5;
+      updateDiag(dt);
     }
 
     composer.render();

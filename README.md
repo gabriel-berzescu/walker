@@ -18,9 +18,10 @@ Jack in. Walk. Chill.
   beacons, streetlamps, Tron-style street lines, and the occasional quiet plaza
   with a slowly tumbling hologram gem. Walk in any direction for as long as you
   like; the city builds itself ahead of you and dissolves behind you.
-- **Real physics** — a [Rapier](https://rapier.rs/) character controller for
-  walking, stairs and jumps, plus dynamic **neon cubes** you can shove around,
-  pulse with a click, or conjure out of thin air.
+- **Real physics** — a [Rapier](https://rapier.rs/) character controller with a
+  perfectly steady camera (no head bob — this is a *relaxing* walk), plus
+  dynamic **neon cubes** you can shove around, pulse with a click, or conjure
+  out of thin air.
 - **Shards** — soft green crystals hovering above the streets. Collect them if
   you feel like it. Or don't. They're not going anywhere. (Well, the ones you
   take are — collected shards never respawn.)
@@ -41,6 +42,9 @@ Jack in. Walk. Chill.
 | Left click | Pulse the cube you're looking at |
 | `Q` | Materialize a new cube |
 | `Esc` | Pause (the music gets dreamy and muffled) |
+| `P` | Cycle render resolution (if your GPU needs a break) |
+| `B` | Toggle bloom |
+| `F3` | Diagnostics overlay (FPS, frame times, camera jitter) |
 
 ## 🔧 How it works
 
