@@ -145,7 +145,7 @@ async function boot() {
         world.step();
         accumulator -= FIXED_DT;
       }
-      player.update(dt);
+      player.update(dt, accumulator / FIXED_DT);
       props.sync();
       city.update(player.position);
       city.tick(dt, player.position);

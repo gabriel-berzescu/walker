@@ -17,8 +17,12 @@ export class Player {
     this.vy = 0;
     this.grounded = false;
     this.bobPhase = 0;
+    this.bobAmp = 0;        // smoothed 0..1, so the bob fades in and out
+    this.bobTarget = 0;
     this.keys = new Set();
     this.position = new THREE.Vector3(0, 1.05, 0);
+    this.prevPosition = this.position.clone();
+    this.renderPos = this.position.clone();
 
     // Kinematic capsule driven by Rapier's character controller
     this.body = world.createRigidBody(
@@ -46,6 +50,8 @@ export class Player {
   }
 
   fixedUpdate(dt) {
+    this.prevPosition.copy(this.position);
+
     // Movement direction in the horizontal plane, relative to yaw
     let ix = 0, iz = 0;
     if (this.keys.has('KeyW')) iz -= 1;
@@ -82,19 +88,27 @@ export class Player {
 
     // Gentle head bob only while moving on the ground
     const moving = (ix !== 0 || iz !== 0) && this.grounded;
-    this.bobPhase = moving ? this.bobPhase + speed * dt * 1.7 : 0;
+    this.bobTarget = moving ? 1 : 0;
+    if (moving) this.bobPhase += speed * dt * 1.6;
   }
 
-  update() {
+  // alpha in [0,1]: how far we are between two physics steps —
+  // the camera follows an interpolated position so it never stutters
+  // when the display refresh rate isn't a multiple of the physics rate.
+  update(dt, alpha) {
     this.camera.rotation.set(0, 0, 0);
     this.camera.rotateY(this.yaw);
     this.camera.rotateX(this.pitch);
 
-    const bob = Math.sin(this.bobPhase * 2) * 0.028;
+    this.renderPos.copy(this.prevPosition).lerp(this.position, alpha);
+
+    this.bobAmp += (this.bobTarget - this.bobAmp) * Math.min(1, dt * 5);
+    const bob = Math.sin(this.bobPhase) * 0.02 * this.bobAmp;
+
     this.camera.position.set(
-      this.position.x,
-      this.position.y + EYE_OFFSET + bob,
-      this.position.z
+      this.renderPos.x,
+      this.renderPos.y + EYE_OFFSET + bob,
+      this.renderPos.z
     );
   }
 }
